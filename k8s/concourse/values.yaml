@@ -1,0 +1,8 @@
+web:
+  service:
+    type: LoadBalancer
+persistence:
+  enabled: false
+postgresql:
+  persistence.enabled: false
+
