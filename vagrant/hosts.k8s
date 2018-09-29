@@ -1,0 +1,10 @@
+#K8S Host file
+127.0.0.1	localhost	localhost.localdomain
+
+192.168.0.171	k8smaster001.local k8smaster001 kubernetes
+192.168.0.172	k8smaster002.local k8smaster001 kubernetes
+192.168.0.173	k8smaster003.local k8smaster001 kubernetes
+
+192.168.0.181	k8sworker001.local k8sworker001
+192.168.0.181	k8sworker002.local k8sworker002
+192.168.0.181	k8sworker003.local k8sworker003 
