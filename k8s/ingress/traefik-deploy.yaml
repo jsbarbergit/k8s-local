@@ -1,0 +1,85 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik
+  labels:
+    k8s-app: traefik-ingress-lb
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+      name: http
+  type: NodePort
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-console
+  labels:
+    k8s-app: traefik-ingress-lb
+  namespace: kube-system
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 8080
+      name: webui
+  type: NodePort
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-conf
+  namespace: kube-system
+data:
+  traefik.toml: |
+    # traefik.toml
+    defaultEntryPoints = ["http"]
+    [entryPoints]
+      [entryPoints.http]
+      address = ":80"
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: traefik-ingress-controller
+  labels:
+    k8s-app: traefik-ingress-lb
+  namespace: kube-system
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: traefik-ingress-lb
+        name: traefik-ingress-lb
+    spec:
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: config
+          configMap:
+            name: traefik-conf
+      containers:
+        - image: traefik
+          name: traefik-ingress-lb
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: "/config"
+              name: "config"
+          ports:
+            - containerPort: 80
+              hostPort: 80
+            - containerPort: 8080
+          args:
+          - --configfile=/config/traefik.toml
+          - --api=true
+          - --api.dashboard=true
+          - --kubernetes
+          - --logLevel=ERROR
+          - --kubernetes.endpoint=https://192.168.0.171:6443

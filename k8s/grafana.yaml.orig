@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  annotations:
+    traefik.backend.loadbalancer.stickiness: "false"
+    traefik.backend.loadbalancer.method: "wrr"
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    app: grafana
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - image: grafana/grafana:5.0.1
+        name: grafana
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+        env:
+          - name: GF_AUTH_BASIC_ENABLED
+            value: "false"
+          - name: GF_AUTH_ANONYMOUS_ENABLED
+            value: "true"
+          - name: GF_AUTH_ANONYMOUS_ORG_ROLE
+            value: Admin
+          - name: GF_SERVER_ROOT_URL
+            value: /api/v1/proxy/namespaces/default/services/grafana/
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: grafana
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+ rules:
+   - host: grafana.k8s.local
+     http:
+       paths:
+          - backend:
+             serviceName: grafana
+             servicePort: 3000
